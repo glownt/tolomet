@@ -4,6 +4,7 @@ import com.akrog.tolomet.Station;
 import com.akrog.tolomet.utils.Utils;
 import com.akrog.tolomet.io.Downloader;
 
+import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,11 +14,14 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-//import java.util.logging.Logger;
+import java.util.logging.Logger;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class MeteoNavarraProvider implements WindProvider {
 	// Create a logger for this class
-	//private static final Logger LOGGER = Logger.getLogger(MeteoNavarraProvider.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(MeteoNavarraProvider.class.getName());
 
 
 	public MeteoNavarraProvider() {
@@ -34,8 +38,19 @@ public class MeteoNavarraProvider implements WindProvider {
 	public boolean travel(Station station, long date) {
 		Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 		now.setTimeInMillis(date);
-		String time1 = String.format("%d/%d/%d", now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.MONTH)+1, now.get(Calendar.YEAR) );
-		String time2 = String.format("%d/%d/%d", now.get(Calendar.DAY_OF_MONTH)+1, now.get(Calendar.MONTH)+1, now.get(Calendar.YEAR) );
+
+
+
+		LocalDate today = LocalDate.now();
+		LocalDate tomorrow = today.plusDays(1);
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+		String time1 = today.format(formatter);
+		String time2 = tomorrow.format(formatter);
+
+		//String time1 = String.format("%d/%d/%d", now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.MONTH)+1, now.get(Calendar.YEAR) );
+		//String time2 = String.format("%d/%d/%d", now.get(Calendar.DAY_OF_MONTH)+1, now.get(Calendar.MONTH)+1, now.get(Calendar.YEAR) );
 		downloader = new Downloader();
 		downloader.useLineBreak(false);
 		downloader.setUrl("https://meteo.navarra.es/estaciones/estacion_datos.cfm");
@@ -47,8 +62,10 @@ public class MeteoNavarraProvider implements WindProvider {
 		downloader.addParam("p_10","9");
 		downloader.addParam("fecha_desde",time1);
 		downloader.addParam("fecha_hasta",time2);
-		downloader.addParam("dl","csv");
+		//downloader.addParam("dl","csv");
+
 		updateStation(station, downloader.download());
+		LOGGER.info(downloader.getUrl() + "?" + downloader.getQuery2());
 		return true;
 	}
 
@@ -168,12 +185,12 @@ public class MeteoNavarraProvider implements WindProvider {
 				Number windDir = Integer.parseInt(getContent(cells[5]));
 				station.getMeteo().getWindDirection().put(date, windDir);
 
-				// Velocidad media viento (m/s)
-				Number windSpeedMed = Float.parseFloat(getContent(cells[3]));
+				// Velocidad media viento (km/h)
+				Number windSpeedMed = Float.parseFloat(getContent(cells[4]));
 				station.getMeteo().getWindSpeedMed().put(date, windSpeedMed);
 
-				// Racha máxima (m/s)
-				Number windSpeedMax = Float.parseFloat(getContent(cells[6]));
+				// Racha máxima (km/h)
+				Number windSpeedMax = Float.parseFloat(getContent(cells[7]));
 				station.getMeteo().getWindSpeedMax().put(date, windSpeedMax);
 
 				// Humedad (%)

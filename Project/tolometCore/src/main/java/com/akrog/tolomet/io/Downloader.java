@@ -202,7 +202,7 @@ public class Downloader {
 		this.query = query;
 	}
 	
-	private String getQuery() throws UnsupportedEncodingException {
+	public String getQuery() throws UnsupportedEncodingException {
 		if( query != null )
 			return query;
 		
@@ -224,6 +224,11 @@ public class Downloader {
 
 	public String getUrl() {
 		return this.url;
+	}
+
+	public String getQuery2() {
+		try {return getQuery();}
+		catch (UnsupportedEncodingException ex) {return "";}
 	}
 
 	public void setUrl(String url) {
